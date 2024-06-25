@@ -1,3 +1,4 @@
 interactions.py
 aio-mc-rcon
 cryptography
+coloredlogs
