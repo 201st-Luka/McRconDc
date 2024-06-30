@@ -2,6 +2,7 @@ __all__ = (
     'McRconDcException',
     'MissingEnvVarException',
     'NoDbConnectionException',
+    'MojangApiError',
 )
 
 
@@ -18,5 +19,9 @@ class DataBaseException(McRconDcException):
 
 
 class NoDbConnectionException(DataBaseException):
+    pass
+
+
+class MojangApiError(McRconDcException):
     pass
 

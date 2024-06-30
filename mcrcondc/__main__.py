@@ -1,6 +1,6 @@
 from os import environ, path
 
-from .Exceptions import McRconDcException, MissingEnvVarException
+from .McRconDcExceptions import McRconDcException, MissingEnvVarException
 from . import McRconDc
 
 

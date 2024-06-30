@@ -1,6 +1,6 @@
 from sqlite3 import connect, Cursor, Connection
 
-from ..Exceptions import NoDbConnectionException
+from ..McRconDcExceptions import NoDbConnectionException
 
 
 __all__ = (
