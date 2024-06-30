@@ -1,4 +1,4 @@
-from sqlite3 import connect, Cursor
+from sqlite3 import connect, Cursor, Connection
 
 from ..Exceptions import NoDbConnectionException
 
@@ -24,30 +24,30 @@ class DataBase:
             file (str):
                 data base file path
         """
-        self.__db = connect(file)
-        self.__c = self.__db.cursor()
+        self.__conn = connect(file)
+        self.__c = self.__conn.cursor()
 
         with open('mcrcondc/db/load.sql', 'r') as load:
             self.__c.executescript(load.read())
-            self.__db.commit()
+            self.__conn.commit()
+
+    @property
+    def conn(self) -> Connection:
+        return self.__conn
+
+    @property
+    def c(self) -> Cursor:
+        return self.c
 
     @classmethod
-    def get_cursor(cls) -> Cursor:
+    def get_instance(cls) -> 'DataBase':
         """get the cursor of the database"""
         if (instance := cls.__singleton) is None:
             raise NoDbConnectionException("There is no data base connection, initialise the class once before "
                                           "executing queries.")
 
-        return instance.__c
+        return instance
 
     def __del__(self):
         self.__c.close()
-        self.__db.commit()
-
-    @classmethod
-    def save_db(cls):
-        if (instance := cls.__singleton) is None:
-            raise NoDbConnectionException("There is no data base connection, initialise the class once before "
-                                          "saving.")
-
-        return instance.__db.commit()
+        self.__conn.commit()

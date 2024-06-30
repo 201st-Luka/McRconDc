@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from interactions import (Extension, slash_command, SlashContext, OptionType, slash_option, SlashCommand,
                           SlashCommandOption)
 from aiohttp import ClientSession
@@ -22,22 +24,23 @@ class Link(Extension):
                          ),
                      ])
     async def user(self, ctx: SlashContext, string_option: str):
-        async with self.session.get("users/profiles/minecraft/" + string_option) as response:
+        async with self.session.get(quote("/users/profiles/minecraft/" + string_option)) as response:
             if response.status == 200:
-                uuid = (await response.json())['id']
+                json = await response.json()
+                uuid = json['id']
 
-                db = DataBase.get_cursor()
+                db = DataBase.get_instance()
+                db.conn.execute("INSERT INTO MinecraftAccount (uuid) VALUES(:uuid);",
+                                {'uuid': uuid})
+                db.conn.execute("INSERT INTO Link (uuid, user_id) VALUES(:uuid, :id);",
+                                {'uuid': uuid, 'id': ctx.user.id})
+                db.conn.commit()
 
-                db.execute("INSERT INTO MinecraftAccount (uuid) VALUES(:uuid)",
-                           {':uuid': uuid})
-
-                db.execute("INSERT INTO Link (uuid, user_id) VALUES(:uuid, :id)",
-                           {':uuid': uuid, ':id': ctx.user.id})
+                await ctx.send("Link successful.")
 
             else:
-                await ctx.send("Invalid username")
+                await ctx.send("Invalid username.")
 
 
 def setup(bot, api=None):
-    print("here")
     Link(bot, api)

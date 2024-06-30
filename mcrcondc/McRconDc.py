@@ -1,3 +1,4 @@
+from asyncio import get_event_loop
 from logging.handlers import TimedRotatingFileHandler
 from os import path
 from logging import Logger, INFO, DEBUG, Formatter, StreamHandler
@@ -79,7 +80,7 @@ class CustomLogger(Logger):
 
 class McRconDc(Client):
     """Custom Client class that implements the logger and load the extensions"""
-    def __init__(self, token: str, log_path: str, db_file: str, *extensions: str, debug: int = None,
+    def __init__(self, token: str, log_path: str, db_file: str, extensions: str, debug: int = None,
                  request_timeout: ClientTimeout = ClientTimeout(connect=10)):
         """
         Args:
@@ -87,7 +88,7 @@ class McRconDc(Client):
                 Discord authentication token
             log_path (str):
                 log folder path
-            *extensions (str):
+            extensions (str):
                 collection of extension packages
             debug (bool):
                 enable debug mode
@@ -102,16 +103,26 @@ class McRconDc(Client):
         )
 
         self.db = DataBase(db_file)
+        self.__request_timeout = request_timeout
+        self.__extensions = extensions
+        self.mojang_api = None
+
+    async def astart(self, token: str | None = None) -> None:
+        loop = get_event_loop()
 
         self.mojang_api = ClientSession(
             base_url="https://api.mojang.com",
-            timeout=request_timeout
+            loop=loop,
+            timeout=self.__request_timeout
         )
 
-        self.load_extensions(*extensions, api=self.mojang_api)
-        # self.load_extension("Link", extensions, api=self.mojang_api)
+        self.load_extension(f"{self.__extensions}.Link", api=self.mojang_api)
+
+        await super().astart(token)
 
     async def stop(self):
         await self.mojang_api.close()
+        self.db.c.close()
+        self.db.conn.close()
 
         await super().stop()
